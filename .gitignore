@@ -8,3 +8,5 @@ obj/
 
 tools/ffmpeg/bin/*
 !tools/ffmpeg/bin/.gitkeep
+
+download/

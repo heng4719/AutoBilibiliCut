@@ -12,7 +12,10 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        DataContext = new MainWindowViewModel(new VideoMetadataService(), new VideoExportService());
+        DataContext = new MainWindowViewModel(
+            new VideoMetadataService(),
+            new VideoExportService(),
+            new YtDlpDownloadService());
         RegisterNumericInputHandlers();
     }
 

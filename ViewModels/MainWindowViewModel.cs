@@ -10,8 +10,11 @@ namespace videoCut.ViewModels;
 
 public class MainWindowViewModel : INotifyPropertyChanged
 {
+    private const string TestDownloadUrl = "https://www.bilibili.com/video/BV1mfAHzAEZg";
+
     private readonly VideoMetadataService _videoMetadataService;
     private readonly VideoExportService _videoExportService;
+    private readonly YtDlpDownloadService _ytDlpDownloadService;
 
     private string _videoName = "尚未选择视频";
     private string _videoSize = "--";
@@ -30,11 +33,16 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private string _newSegmentEndSecond = "00";
     private TimeSpan? _videoDurationValue;
     private bool _isExporting;
+    private bool _isTestingDownload;
 
-    public MainWindowViewModel(VideoMetadataService videoMetadataService, VideoExportService videoExportService)
+    public MainWindowViewModel(
+        VideoMetadataService videoMetadataService,
+        VideoExportService videoExportService,
+        YtDlpDownloadService ytDlpDownloadService)
     {
         _videoMetadataService = videoMetadataService;
         _videoExportService = videoExportService;
+        _ytDlpDownloadService = ytDlpDownloadService;
 
         SelectVideoCommand = new RelayCommand(async _ => await SelectVideoAsync());
         ClearVideoCommand = new RelayCommand(_ => ClearVideo());
@@ -43,6 +51,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         RemoveSegmentCommand = new RelayCommand(segment => RemoveSegment(segment as SegmentDraft));
         SelectOutputDirectoryCommand = new RelayCommand(_ => SelectOutputDirectory());
         ExportSegmentsCommand = new RelayCommand(async _ => await ExportSegmentsAsync());
+        TestDownloadCommand = new RelayCommand(async _ => await TestDownloadAsync());
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -60,6 +69,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public ICommand SelectOutputDirectoryCommand { get; }
 
     public ICommand ExportSegmentsCommand { get; }
+
+    public ICommand TestDownloadCommand { get; }
 
     public string VideoName
     {
@@ -375,7 +386,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private async Task ExportSegmentsAsync()
     {
-        if (_isExporting)
+        if (_isExporting || _isTestingDownload)
         {
             return;
         }
@@ -435,6 +446,29 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         _isExporting = false;
         SetExportStatus($"导出完成，成功 {successCount} 个，失败 {failureCount} 个", failureCount > 0);
+    }
+
+    private async Task TestDownloadAsync()
+    {
+        if (_isExporting || _isTestingDownload)
+        {
+            return;
+        }
+
+        _isTestingDownload = true;
+        SetExportStatus("正在执行测试下载...");
+
+        var result = await _ytDlpDownloadService.DownloadTestVideoAsync(TestDownloadUrl);
+        if (result.IsSuccess)
+        {
+            SetExportStatus($"测试下载完成，文件已保存到 {result.DownloadDirectory}");
+        }
+        else
+        {
+            SetExportStatus($"测试下载失败：{result.ErrorMessage}", true);
+        }
+
+        _isTestingDownload = false;
     }
 
     private void RevalidateSegments()

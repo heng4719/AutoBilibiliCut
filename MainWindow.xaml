@@ -41,6 +41,10 @@
                 <StackPanel Grid.Column="1"
                             Orientation="Horizontal"
                             VerticalAlignment="Bottom">
+                    <Button Content="测试下载"
+                            Width="110"
+                            Style="{StaticResource GhostButtonStyle}"
+                            Command="{Binding TestDownloadCommand}" />
                     <Button Content="选择视频"
                             Width="118"
                             Command="{Binding SelectVideoCommand}" />
