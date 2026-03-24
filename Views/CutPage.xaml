@@ -430,7 +430,7 @@
                                             Command="{Binding DataContext.RemoveSegmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}">
                                         <Button.Style>
-                                            <Style TargetType="Button" BasedOn="{StaticResource DangerGhostButtonStyle}">
+                                            <Style TargetType="Button" BasedOn="{StaticResource CompactDangerGhostButtonStyle}">
                                                 <Setter Property="Visibility" Value="Visible" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Status}" Value="导出成功">

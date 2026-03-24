@@ -6,11 +6,6 @@ namespace videoCut.Services;
 
 public class YtDlpDownloadService
 {
-    public async Task<YtDlpDownloadResult> DownloadTestVideoAsync(string videoUrl)
-    {
-        return await DownloadVideoAsync(videoUrl, null);
-    }
-
     public async Task<YtDlpDownloadResult> DownloadVideoAsync(
         string videoUrl,
         string? customFileName,

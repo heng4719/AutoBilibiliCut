@@ -7,6 +7,12 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>assets\icon\app.ico</ApplicationIcon>
+    <AssemblyName>videoCut</AssemblyName>
+    <Product>视频下载与切片工具</Product>
+    <Company>videoCut</Company>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,9 +23,18 @@
     <Resource Include="assets\icon\app.ico" />
     <None Include="tools\ffmpeg\bin\ffmpeg.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <TargetPath>tools\ffmpeg\bin\ffmpeg.exe</TargetPath>
     </None>
     <None Include="tools\ffmpeg\bin\ffprobe.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <TargetPath>tools\ffmpeg\bin\ffprobe.exe</TargetPath>
+    </None>
+    <None Include="tools\yt-dlp\yt-dlp.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <TargetPath>tools\yt-dlp\yt-dlp.exe</TargetPath>
     </None>
   </ItemGroup>
 </Project>

@@ -5,8 +5,12 @@ obj/
 *.user
 *.suo
 *.log
+artifacts/
+temp/
 
 tools/ffmpeg/bin/*
 !tools/ffmpeg/bin/.gitkeep
+tools/yt-dlp/*
+!tools/yt-dlp/.gitkeep
 
 download/

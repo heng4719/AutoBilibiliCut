@@ -11,8 +11,6 @@ namespace videoCut.ViewModels;
 
 public class MainWindowViewModel : INotifyPropertyChanged
 {
-    private const string TestDownloadUrl = "https://www.bilibili.com/video/BV1mfAHzAEZg";
-
     private readonly VideoMetadataService _videoMetadataService;
     private readonly VideoExportService _videoExportService;
     private readonly YtDlpDownloadService _ytDlpDownloadService;
@@ -35,7 +33,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private string _newSegmentEndSecond = "00";
     private TimeSpan? _videoDurationValue;
     private bool _isExporting;
-    private bool _isTestingDownload;
     private bool _isDownloadPageActive = true;
     private bool _isCutPageActive;
     private string _downloadVideoUrl = string.Empty;
@@ -66,7 +63,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
         SelectOutputDirectoryCommand = new RelayCommand(_ => SelectOutputDirectory());
         ExportSegmentsCommand = new RelayCommand(async _ => await ExportSegmentsAsync());
         PlaySegmentCommand = new RelayCommand(segment => PlaySegment(segment as SegmentDraft));
-        TestDownloadCommand = new RelayCommand(async _ => await TestDownloadAsync());
         ShowDownloadPageCommand = new RelayCommand(_ => ShowDownloadPage());
         ShowCutPageCommand = new RelayCommand(_ => ShowCutPage());
         DownloadVideoCommand = new RelayCommand(async _ => await DownloadVideoAsync());
@@ -95,8 +91,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public ICommand ExportSegmentsCommand { get; }
 
     public ICommand PlaySegmentCommand { get; }
-
-    public ICommand TestDownloadCommand { get; }
 
     public ICommand ShowDownloadPageCommand { get; }
 
@@ -539,7 +533,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private async Task ExportSegmentsAsync()
     {
-        if (_isExporting || _isTestingDownload)
+        if (_isExporting)
         {
             return;
         }
@@ -610,7 +604,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private void PlaySegment(SegmentDraft? segment)
     {
-        if (_isExporting || _isTestingDownload || _isDownloadingVideo)
+        if (_isExporting || _isDownloadingVideo)
         {
             return;
         }
@@ -647,32 +641,6 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             SetExportStatus($"播放切片失败：{ex.Message}", true);
         }
-    }
-
-    private async Task TestDownloadAsync()
-    {
-        if (_isExporting || _isTestingDownload)
-        {
-            return;
-        }
-
-        _isTestingDownload = true;
-        SetExportStatus("正在执行测试下载...");
-
-        var result = await _ytDlpDownloadService.DownloadTestVideoAsync(TestDownloadUrl);
-        if (result.IsSuccess)
-        {
-            SetExportStatus($"测试下载完成，文件已保存到 {result.DownloadDirectory}");
-            SetDownloadStatus($"测试下载完成，文件已保存到 {result.DownloadDirectory}");
-            RefreshDownloadedVideos(updateStatus: false);
-        }
-        else
-        {
-            SetExportStatus($"测试下载失败：{result.ErrorMessage}", true);
-            SetDownloadStatus($"测试下载失败：{result.ErrorMessage}", true);
-        }
-
-        _isTestingDownload = false;
     }
 
     private async Task DownloadVideoAsync()
