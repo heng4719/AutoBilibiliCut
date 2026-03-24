@@ -3,9 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:models="clr-namespace:videoCut.Models"
+        xmlns:views="clr-namespace:videoCut.Views"
         mc:Ignorable="d"
-        Title="视频切片工具"
+        Title="视频下载与切片工具"
+        Icon="/assets/icon/app.ico"
         Width="1120"
         Height="760"
         MinWidth="980"
@@ -18,366 +19,106 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid Grid.Row="0" Margin="0,0,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="视频切片工具"
+                    <TextBlock Text="视频下载与切片工具"
                                FontSize="26"
                                FontWeight="Bold" />
                     <TextBlock Margin="0,6,0,0"
                                Foreground="{StaticResource SecondaryTextBrush}"
-                               Text="选择本地视频后，查看基础信息并配置多个切片任务。" />
+                               Text="先下载视频，再进入切片页面完成时间范围配置与导出。" />
                 </StackPanel>
 
-                <StackPanel Grid.Column="1"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Bottom">
-                    <Button Content="测试下载"
-                            Width="110"
-                            Style="{StaticResource GhostButtonStyle}"
-                            Command="{Binding TestDownloadCommand}" />
-                    <Button Content="选择视频"
-                            Width="118"
-                            Command="{Binding SelectVideoCommand}" />
-                    <Button Content="清空"
-                            Width="92"
-                            Style="{StaticResource GhostButtonStyle}"
-                            Command="{Binding ClearVideoCommand}" />
-                </StackPanel>
+                <Border Grid.Column="1"
+                        VerticalAlignment="Bottom"
+                        Background="{StaticResource SurfaceBrush}"
+                        BorderBrush="{StaticResource LineBrush}"
+                        BorderThickness="1"
+                        CornerRadius="10"
+                        ClipToBounds="True">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="1" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Button Grid.Column="0"
+                                Content="视频下载"
+                                Command="{Binding ShowDownloadPageCommand}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SegmentedNavLeftButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsDownloadPageActive}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <Border Grid.Column="1"
+                                Background="{StaticResource LineBrush}" />
+
+                        <Button Grid.Column="2"
+                                Content="视频切片"
+                                Command="{Binding ShowCutPageCommand}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SegmentedNavRightButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsCutPageActive}" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource PrimaryBrush}" />
+                                            <Setter Property="Foreground" Value="White" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+                </Border>
             </Grid>
 
             <Border Grid.Row="1"
                     BorderBrush="{StaticResource LineBrush}"
-                    BorderThickness="0,1,0,1"
-                    Padding="0,12">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="2*" />
-                    </Grid.ColumnDefinitions>
+                    BorderThickness="0,1,0,0"
+                    Margin="0,0,0,16" />
 
-                    <TextBlock Grid.Row="0"
-                               Grid.ColumnSpan="4"
-                               Style="{StaticResource SectionTitleStyle}"
-                               Text="视频信息" />
-
-                    <Border Grid.Row="1"
-                            Grid.ColumnSpan="4"
-                            Margin="0,0,0,10"
-                            Padding="10,8"
-                            Background="{StaticResource MutedSurfaceBrush}"
-                            BorderBrush="{StaticResource LineBrush}"
-                            BorderThickness="1">
-                        <TextBlock Foreground="{StaticResource SecondaryTextBrush}"
-                                   Text="{Binding VideoStatus}" />
-                    </Border>
-
-                    <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,14,0">
-                        <TextBlock Style="{StaticResource LabelStyle}" Text="文件名" />
-                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="{Binding VideoName}" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,14,0">
-                        <TextBlock Style="{StaticResource LabelStyle}" Text="文件大小" />
-                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="{Binding VideoSize}" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,14,0">
-                        <TextBlock Style="{StaticResource LabelStyle}" Text="视频时长" />
-                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="{Binding VideoDuration}" />
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="2" Grid.Column="3">
-                        <TextBlock Style="{StaticResource LabelStyle}" Text="文件路径" />
-                        <TextBlock FontSize="14"
-                                   FontWeight="SemiBold"
-                                   TextWrapping="Wrap"
-                                   Text="{Binding VideoPath}" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <Grid Grid.Row="2" Margin="0,12,0,8">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <TextBlock Grid.Row="0"
-                           Grid.ColumnSpan="4"
-                           Style="{StaticResource SectionTitleStyle}"
-                           Text="新增切片" />
-
-                <TextBlock Grid.Row="1"
-                           Grid.ColumnSpan="4"
-                           Margin="0,0,0,8"
-                           Foreground="{StaticResource SecondaryTextBrush}"
-                           Text="请先选择视频，再添加切片时间范围。">
-                    <TextBlock.Style>
-                        <Style TargetType="TextBlock">
+            <Grid Grid.Row="2">
+                <views:DownloadPage>
+                    <views:DownloadPage.Style>
+                        <Style TargetType="views:DownloadPage">
                             <Setter Property="Visibility" Value="Collapsed" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding HasSelectedVideo}" Value="False">
+                                <DataTrigger Binding="{Binding IsDownloadPageActive}" Value="True">
                                     <Setter Property="Visibility" Value="Visible" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
-                    </TextBlock.Style>
-                </TextBlock>
+                    </views:DownloadPage.Style>
+                </views:DownloadPage>
 
-                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,12,0"
-                            IsEnabled="{Binding HasSelectedVideo}">
-                    <TextBlock Style="{StaticResource LabelStyle}" Text="切片名称" />
-                    <TextBox Text="{Binding NewSegmentName, UpdateSourceTrigger=PropertyChanged}" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,0,12,0"
-                            IsEnabled="{Binding HasSelectedVideo}">
-                    <TextBlock Style="{StaticResource LabelStyle}" Text="开始时间" />
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="10" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="10" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <ComboBox x:Name="StartHourComboBox"
-                                  Grid.Column="0"
-                                  ItemsSource="{Binding HourOptions}"
-                                  PreviewTextInput="NumericComboBox_PreviewTextInput"
-                                  PreviewKeyDown="NumericComboBox_PreviewKeyDown"
-                                  Text="{Binding NewSegmentStartHour, UpdateSourceTrigger=PropertyChanged}" />
-                        <ComboBox x:Name="StartMinuteComboBox"
-                                  Grid.Column="2"
-                                  ItemsSource="{Binding MinuteSecondOptions}"
-                                  PreviewTextInput="NumericComboBox_PreviewTextInput"
-                                  PreviewKeyDown="NumericComboBox_PreviewKeyDown"
-                                  Text="{Binding NewSegmentStartMinute, UpdateSourceTrigger=PropertyChanged}" />
-                        <ComboBox x:Name="StartSecondComboBox"
-                                  Grid.Column="4"
-                                  ItemsSource="{Binding MinuteSecondOptions}"
-                                  PreviewTextInput="NumericComboBox_PreviewTextInput"
-                                  PreviewKeyDown="NumericComboBox_PreviewKeyDown"
-                                  Text="{Binding NewSegmentStartSecond, UpdateSourceTrigger=PropertyChanged}" />
-                    </Grid>
-                </StackPanel>
-
-                <StackPanel Grid.Row="2" Grid.Column="2" Margin="0,0,12,0"
-                            IsEnabled="{Binding HasSelectedVideo}">
-                    <TextBlock Style="{StaticResource LabelStyle}" Text="结束时间" />
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="10" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="10" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-
-                        <ComboBox x:Name="EndHourComboBox"
-                                  Grid.Column="0"
-                                  ItemsSource="{Binding HourOptions}"
-                                  PreviewTextInput="NumericComboBox_PreviewTextInput"
-                                  PreviewKeyDown="NumericComboBox_PreviewKeyDown"
-                                  Text="{Binding NewSegmentEndHour, UpdateSourceTrigger=PropertyChanged}" />
-                        <ComboBox x:Name="EndMinuteComboBox"
-                                  Grid.Column="2"
-                                  ItemsSource="{Binding MinuteSecondOptions}"
-                                  PreviewTextInput="NumericComboBox_PreviewTextInput"
-                                  PreviewKeyDown="NumericComboBox_PreviewKeyDown"
-                                  Text="{Binding NewSegmentEndMinute, UpdateSourceTrigger=PropertyChanged}" />
-                        <ComboBox x:Name="EndSecondComboBox"
-                                  Grid.Column="4"
-                                  ItemsSource="{Binding MinuteSecondOptions}"
-                                  PreviewTextInput="NumericComboBox_PreviewTextInput"
-                                  PreviewKeyDown="NumericComboBox_PreviewKeyDown"
-                                  Text="{Binding NewSegmentEndSecond, UpdateSourceTrigger=PropertyChanged}" />
-                    </Grid>
-                </StackPanel>
-
-                <StackPanel Grid.Row="2" Grid.Column="3"
-                            Orientation="Horizontal"
-                            VerticalAlignment="Bottom"
-                            Margin="0,0,0,8">
-                    <Button Content="加入列表"
-                            Width="110"
-                            IsEnabled="{Binding HasSelectedVideo}"
-                            Command="{Binding AddSegmentCommand}" />
-                    <Button Content="清空列表"
-                            Width="110"
-                            Style="{StaticResource GhostButtonStyle}"
-                            Command="{Binding ClearSegmentsCommand}" />
-                </StackPanel>
+                <views:CutPage>
+                    <views:CutPage.Style>
+                        <Style TargetType="views:CutPage">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsCutPageActive}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </views:CutPage.Style>
+                </views:CutPage>
             </Grid>
-
-            <Grid Grid.Row="3">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-
-                <DockPanel Grid.Row="0" Margin="0,0,0,10">
-                    <TextBlock DockPanel.Dock="Left"
-                               Style="{StaticResource SectionTitleStyle}"
-                               Margin="0"
-                               Text="切片列表" />
-                    <TextBlock DockPanel.Dock="Right"
-                               VerticalAlignment="Center"
-                               Foreground="{StaticResource SecondaryTextBrush}"
-                               Text="时间格式：mm:ss 或 hh:mm:ss" />
-                </DockPanel>
-
-                <DataGrid Grid.Row="1"
-                          Background="{StaticResource SurfaceBrush}"
-                          ItemsSource="{Binding Segments}"
-                          IsReadOnly="False">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Width="2*"
-                                            Header="切片名称"
-                                            ElementStyle="{StaticResource DataGridDisplayTextStyle}"
-                                            EditingElementStyle="{StaticResource DataGridEditingTextStyle}"
-                                            Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
-                        <DataGridTextColumn Width="*"
-                                            Header="开始时间"
-                                            ElementStyle="{StaticResource DataGridDisplayTextStyle}"
-                                            EditingElementStyle="{StaticResource DataGridEditingTextStyle}"
-                                            Binding="{Binding StartTime, UpdateSourceTrigger=PropertyChanged}" />
-                        <DataGridTextColumn Width="*"
-                                            Header="结束时间"
-                                            ElementStyle="{StaticResource DataGridDisplayTextStyle}"
-                                            EditingElementStyle="{StaticResource DataGridEditingTextStyle}"
-                                            Binding="{Binding EndTime, UpdateSourceTrigger=PropertyChanged}" />
-                        <DataGridTextColumn Width="*"
-                                            Header="预计时长"
-                                            IsReadOnly="True"
-                                            ElementStyle="{StaticResource DataGridDisplayTextStyle}"
-                                            Binding="{Binding Duration}" />
-                        <DataGridTextColumn Width="*"
-                                            Header="状态"
-                                            IsReadOnly="True"
-                                            ElementStyle="{StaticResource DataGridDisplayTextStyle}"
-                                            Binding="{Binding Status}" />
-                        <DataGridTemplateColumn Width="88" Header="操作">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate DataType="{x:Type models:SegmentDraft}">
-                                    <Button Content="删除"
-                                            Width="60"
-                                            Padding="10,6"
-                                            Margin="0"
-                                            Style="{StaticResource GhostButtonStyle}"
-                                            Command="{Binding DataContext.RemoveSegmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}" />
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
-
-                <TextBlock Grid.Row="2"
-                           Margin="0,8,0,0"
-                           Foreground="{StaticResource SecondaryTextBrush}"
-                           Text="列表支持继续直接修改单元格；只有列表区域会出现滚动条。" />
-            </Grid>
-
-            <Border Grid.Row="4"
-                    BorderBrush="{StaticResource LineBrush}"
-                    BorderThickness="0,1,0,0"
-                    Margin="0,10,0,0"
-                    Padding="0,10,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="1.4*" />
-                        <ColumnDefinition Width="1.2*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <TextBlock Grid.Row="0"
-                               Grid.Column="0"
-                               Style="{StaticResource SectionTitleStyle}"
-                               Margin="0,0,0,6"
-                               Text="导出设置" />
-
-                    <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,14,0">
-                        <TextBlock Style="{StaticResource LabelStyle}" Text="输出目录" />
-                        <Border Height="38"
-                                Padding="12,0"
-                                Background="{StaticResource SurfaceBrush}"
-                                BorderBrush="{StaticResource LineBrush}"
-                                BorderThickness="1">
-                            <TextBlock VerticalAlignment="Center"
-                                       TextTrimming="CharacterEllipsis"
-                                       Text="{Binding OutputDirectory}" />
-                        </Border>
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,0,14,0">
-                        <TextBlock Style="{StaticResource LabelStyle}" Text="状态" />
-                        <Border Height="38"
-                                Padding="12,0"
-                                Background="{StaticResource MutedSurfaceBrush}"
-                                BorderBrush="{StaticResource LineBrush}"
-                                BorderThickness="1">
-                            <TextBlock VerticalAlignment="Center"
-                                       TextTrimming="CharacterEllipsis"
-                                       Text="{Binding ExportStatus}">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{StaticResource BodyTextBrush}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsExportStatusError}" Value="True">
-                                                <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
-                    </StackPanel>
-
-                    <StackPanel Grid.Row="1" Grid.Column="2"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Bottom">
-                        <Button Content="选择输出目录"
-                                Width="132"
-                                Style="{StaticResource GhostButtonStyle}"
-                                Command="{Binding SelectOutputDirectoryCommand}" />
-                        <Button Content="开始导出"
-                                Width="116"
-                                Margin="0"
-                                Command="{Binding ExportSegmentsCommand}" />
-                    </StackPanel>
-                </Grid>
-            </Border>
         </Grid>
     </Grid>
 </Window>

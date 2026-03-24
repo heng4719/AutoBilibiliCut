@@ -103,6 +103,101 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="SegmentedNavButtonStyle" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="MinWidth" Value="116" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="20,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FFF0FDFA" />
+                                <Setter Property="Foreground" Value="{StaticResource BodyTextBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#FFE2F5F0" />
+                                <Setter Property="Foreground" Value="{StaticResource BodyTextBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SegmentedNavLeftButtonStyle" TargetType="Button" BasedOn="{StaticResource SegmentedNavButtonStyle}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="10,0,0,10">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FFF0FDFA" />
+                                <Setter Property="Foreground" Value="{StaticResource BodyTextBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#FFE2F5F0" />
+                                <Setter Property="Foreground" Value="{StaticResource BodyTextBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SegmentedNavRightButtonStyle" TargetType="Button" BasedOn="{StaticResource SegmentedNavButtonStyle}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="0,10,10,0">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FFF0FDFA" />
+                                <Setter Property="Foreground" Value="{StaticResource BodyTextBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#FFE2F5F0" />
+                                <Setter Property="Foreground" Value="{StaticResource BodyTextBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.55" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CompactGhostButtonStyle" TargetType="Button" BasedOn="{StaticResource GhostButtonStyle}">
+            <Setter Property="Height" Value="32" />
+            <Setter Property="MinWidth" Value="52" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
         <Style TargetType="TextBox">
             <Setter Property="Height" Value="38" />
             <Setter Property="Padding" Value="12,8" />
@@ -111,6 +206,19 @@
             <Setter Property="Background" Value="White" />
             <Setter Property="Margin" Value="0,0,0,8" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{StaticResource SecondaryTextBrush}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style TargetType="ProgressBar">
+            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}" />
+            <Setter Property="Background" Value="#FFE7ECEF" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Height" Value="10" />
         </Style>
 
         <Style TargetType="ComboBox">
@@ -169,6 +277,9 @@
         <Style TargetType="DataGridCell">
             <Setter Property="VerticalContentAlignment" Value="Center" />
             <Setter Property="Padding" Value="8,0" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
         </Style>
 
         <Style x:Key="DataGridDisplayTextStyle" TargetType="TextBlock">

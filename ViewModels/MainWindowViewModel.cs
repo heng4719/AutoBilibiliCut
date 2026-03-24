@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
@@ -15,6 +16,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private readonly VideoMetadataService _videoMetadataService;
     private readonly VideoExportService _videoExportService;
     private readonly YtDlpDownloadService _ytDlpDownloadService;
+    private static readonly string[] SupportedVideoExtensions = [".mp4", ".mov", ".avi", ".mkv", ".wmv", ".flv", ".m4v", ".webm"];
 
     private string _videoName = "尚未选择视频";
     private string _videoSize = "--";
@@ -34,6 +36,18 @@ public class MainWindowViewModel : INotifyPropertyChanged
     private TimeSpan? _videoDurationValue;
     private bool _isExporting;
     private bool _isTestingDownload;
+    private bool _isDownloadPageActive = true;
+    private bool _isCutPageActive;
+    private string _downloadVideoUrl = string.Empty;
+    private string _downloadFileName = string.Empty;
+    private string _downloadStatus = "请输入视频地址后开始下载。";
+    private bool _isDownloadStatusError;
+    private string _downloadDirectory = "下载目录读取中...";
+    private double _downloadProgressValue;
+    private string _downloadProgressText = "等待开始";
+    private bool _isDownloadingVideo;
+    private string _currentDownloadTitle = "尚未开始下载";
+    private bool _clearDownloadInputsAfterSuccess = true;
 
     public MainWindowViewModel(
         VideoMetadataService videoMetadataService,
@@ -52,6 +66,15 @@ public class MainWindowViewModel : INotifyPropertyChanged
         SelectOutputDirectoryCommand = new RelayCommand(_ => SelectOutputDirectory());
         ExportSegmentsCommand = new RelayCommand(async _ => await ExportSegmentsAsync());
         TestDownloadCommand = new RelayCommand(async _ => await TestDownloadAsync());
+        ShowDownloadPageCommand = new RelayCommand(_ => ShowDownloadPage());
+        ShowCutPageCommand = new RelayCommand(_ => ShowCutPage());
+        DownloadVideoCommand = new RelayCommand(async _ => await DownloadVideoAsync());
+        RefreshDownloadedVideosCommand = new RelayCommand(_ => RefreshDownloadedVideos());
+        OpenDownloadFolderCommand = new RelayCommand(_ => OpenDownloadFolder());
+        PlayDownloadedVideoCommand = new RelayCommand(file => PlayDownloadedVideo(file as DownloadedVideoFile));
+        SelectDownloadedVideoCommand = new RelayCommand(async file => await SelectDownloadedVideoAsync(file as DownloadedVideoFile));
+
+        RefreshDownloadedVideos();
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -71,6 +94,20 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public ICommand ExportSegmentsCommand { get; }
 
     public ICommand TestDownloadCommand { get; }
+
+    public ICommand ShowDownloadPageCommand { get; }
+
+    public ICommand ShowCutPageCommand { get; }
+
+    public ICommand DownloadVideoCommand { get; }
+
+    public ICommand RefreshDownloadedVideosCommand { get; }
+
+    public ICommand OpenDownloadFolderCommand { get; }
+
+    public ICommand PlayDownloadedVideoCommand { get; }
+
+    public ICommand SelectDownloadedVideoCommand { get; }
 
     public string VideoName
     {
@@ -120,6 +157,78 @@ public class MainWindowViewModel : INotifyPropertyChanged
         private set => SetProperty(ref _isExportStatusError, value);
     }
 
+    public string DownloadVideoUrl
+    {
+        get => _downloadVideoUrl;
+        set => SetProperty(ref _downloadVideoUrl, value);
+    }
+
+    public string DownloadFileName
+    {
+        get => _downloadFileName;
+        set => SetProperty(ref _downloadFileName, value);
+    }
+
+    public string DownloadStatus
+    {
+        get => _downloadStatus;
+        private set => SetProperty(ref _downloadStatus, value);
+    }
+
+    public bool IsDownloadStatusError
+    {
+        get => _isDownloadStatusError;
+        private set => SetProperty(ref _isDownloadStatusError, value);
+    }
+
+    public string DownloadDirectory
+    {
+        get => _downloadDirectory;
+        private set => SetProperty(ref _downloadDirectory, value);
+    }
+
+    public double DownloadProgressValue
+    {
+        get => _downloadProgressValue;
+        private set => SetProperty(ref _downloadProgressValue, value);
+    }
+
+    public string DownloadProgressText
+    {
+        get => _downloadProgressText;
+        private set => SetProperty(ref _downloadProgressText, value);
+    }
+
+    public string CurrentDownloadTitle
+    {
+        get => _currentDownloadTitle;
+        private set => SetProperty(ref _currentDownloadTitle, value);
+    }
+
+    public bool ClearDownloadInputsAfterSuccess
+    {
+        get => _clearDownloadInputsAfterSuccess;
+        set => SetProperty(ref _clearDownloadInputsAfterSuccess, value);
+    }
+
+    public bool IsDownloadingVideo
+    {
+        get => _isDownloadingVideo;
+        private set
+        {
+            SetProperty(ref _isDownloadingVideo, value);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanEditDownloadInputs)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanRefreshDownloadedVideos)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanChooseDownloadedVideo)));
+        }
+    }
+
+    public bool CanEditDownloadInputs => !IsDownloadingVideo;
+
+    public bool CanRefreshDownloadedVideos => !IsDownloadingVideo;
+
+    public bool CanChooseDownloadedVideo => !IsDownloadingVideo;
+
     public string NewSegmentName
     {
         get => _newSegmentName;
@@ -162,7 +271,22 @@ public class MainWindowViewModel : INotifyPropertyChanged
         set => SetProperty(ref _newSegmentEndSecond, value);
     }
 
+    public bool IsDownloadPageActive
+    {
+        get => _isDownloadPageActive;
+        private set => SetProperty(ref _isDownloadPageActive, value);
+    }
+
+    public bool IsCutPageActive
+    {
+        get => _isCutPageActive;
+        private set => SetProperty(ref _isCutPageActive, value);
+    }
+
     public ObservableCollection<SegmentDraft> Segments { get; } =
+    [];
+
+    public ObservableCollection<DownloadedVideoFile> DownloadedVideos { get; } =
     [];
 
     public IReadOnlyList<string> HourOptions { get; } = BuildOptions(100);
@@ -170,6 +294,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public IReadOnlyList<string> MinuteSecondOptions { get; } = BuildOptions(60);
 
     public bool HasSelectedVideo => !string.IsNullOrWhiteSpace(VideoPath) && File.Exists(VideoPath);
+
+    public bool HasDownloadedVideos => DownloadedVideos.Count > 0;
 
     public void RemoveSegment(SegmentDraft? segment)
     {
@@ -188,14 +314,31 @@ public class MainWindowViewModel : INotifyPropertyChanged
         UpdateSegmentSummary();
     }
 
+    private void ShowDownloadPage()
+    {
+        IsDownloadPageActive = true;
+        IsCutPageActive = false;
+        RefreshDownloadedVideos();
+    }
+
+    private void ShowCutPage()
+    {
+        IsDownloadPageActive = false;
+        IsCutPageActive = true;
+    }
+
     private async Task SelectVideoAsync()
     {
+        var initialDirectory = ResolveDownloadDirectory();
+        Directory.CreateDirectory(initialDirectory);
+
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
             Title = "选择视频文件",
             Filter = "视频文件|*.mp4;*.mov;*.avi;*.mkv;*.wmv;*.flv;*.m4v|所有文件|*.*",
             CheckFileExists = true,
-            Multiselect = false
+            Multiselect = false,
+            InitialDirectory = initialDirectory
         };
 
         if (dialog.ShowDialog() != true)
@@ -462,13 +605,212 @@ public class MainWindowViewModel : INotifyPropertyChanged
         if (result.IsSuccess)
         {
             SetExportStatus($"测试下载完成，文件已保存到 {result.DownloadDirectory}");
+            SetDownloadStatus($"测试下载完成，文件已保存到 {result.DownloadDirectory}");
+            RefreshDownloadedVideos(updateStatus: false);
         }
         else
         {
             SetExportStatus($"测试下载失败：{result.ErrorMessage}", true);
+            SetDownloadStatus($"测试下载失败：{result.ErrorMessage}", true);
         }
 
         _isTestingDownload = false;
+    }
+
+    private async Task DownloadVideoAsync()
+    {
+        if (_isDownloadingVideo)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(DownloadVideoUrl))
+        {
+            SetDownloadStatus("请先输入视频地址。", true);
+            return;
+        }
+
+        IsDownloadingVideo = true;
+        DownloadProgressValue = 0;
+        DownloadProgressText = "准备中";
+        CurrentDownloadTitle = "正在获取视频信息...";
+        SetDownloadStatus("正在准备下载...");
+
+        var progress = new Progress<YtDlpProgressUpdate>(update =>
+        {
+            if (!string.IsNullOrWhiteSpace(update.Title))
+            {
+                CurrentDownloadTitle = update.Title;
+            }
+
+            if (update.Percent.HasValue)
+            {
+                DownloadProgressValue = update.Percent.Value;
+                DownloadProgressText = BuildProgressText(update.Percent.Value, update.SpeedText, update.EtaText);
+            }
+
+            if (!string.IsNullOrWhiteSpace(update.StatusMessage))
+            {
+                SetDownloadStatus(string.IsNullOrWhiteSpace(CurrentDownloadTitle)
+                    ? update.StatusMessage
+                    : $"{update.StatusMessage}：{CurrentDownloadTitle}");
+            }
+        });
+
+        try
+        {
+            var result = await _ytDlpDownloadService.DownloadVideoAsync(
+                DownloadVideoUrl.Trim(),
+                DownloadFileName,
+                progress);
+
+            if (result.IsSuccess)
+            {
+                DownloadProgressValue = 100;
+                DownloadProgressText = "100%";
+                RefreshDownloadedVideos(updateStatus: false);
+
+                var fileName = string.IsNullOrWhiteSpace(result.OutputFilePath)
+                    ? "视频下载完成"
+                    : Path.GetFileName(result.OutputFilePath);
+
+                CurrentDownloadTitle = fileName;
+                SetDownloadStatus($"下载完成：{fileName}");
+
+                if (ClearDownloadInputsAfterSuccess)
+                {
+                    DownloadVideoUrl = string.Empty;
+                    DownloadFileName = string.Empty;
+                }
+            }
+            else
+            {
+                SetDownloadStatus($"下载失败：{result.ErrorMessage}", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            SetDownloadStatus($"下载失败：{ex.Message}", true);
+        }
+        finally
+        {
+            IsDownloadingVideo = false;
+        }
+    }
+
+    private void PlayDownloadedVideo(DownloadedVideoFile? file)
+    {
+        if (file is null || string.IsNullOrWhiteSpace(file.FullPath))
+        {
+            SetDownloadStatus("未找到要播放的视频文件。", true);
+            return;
+        }
+
+        if (!File.Exists(file.FullPath))
+        {
+            SetDownloadStatus("视频文件不存在，请先刷新列表。", true);
+            RefreshDownloadedVideos();
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = file.FullPath,
+                UseShellExecute = true
+            });
+
+            SetDownloadStatus($"已打开视频：{file.Name}");
+            CurrentDownloadTitle = file.Name;
+        }
+        catch (Exception ex)
+        {
+            SetDownloadStatus($"播放失败：{ex.Message}", true);
+        }
+    }
+
+    private void OpenDownloadFolder()
+    {
+        var downloadDirectory = ResolveDownloadDirectory();
+        Directory.CreateDirectory(downloadDirectory);
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = downloadDirectory,
+                UseShellExecute = true
+            });
+
+            SetDownloadStatus("已打开 download 文件夹。");
+        }
+        catch (Exception ex)
+        {
+            SetDownloadStatus($"打开文件夹失败：{ex.Message}", true);
+        }
+    }
+
+    private async Task SelectDownloadedVideoAsync(DownloadedVideoFile? file)
+    {
+        if (file is null || string.IsNullOrWhiteSpace(file.FullPath))
+        {
+            SetDownloadStatus("未找到要选择的视频文件。", true);
+            return;
+        }
+
+        if (!File.Exists(file.FullPath))
+        {
+            SetDownloadStatus("视频文件不存在，请先刷新列表。", true);
+            RefreshDownloadedVideos();
+            return;
+        }
+
+        ShowCutPage();
+        CurrentDownloadTitle = file.Name;
+        SetDownloadStatus($"已选择视频：{file.Name}");
+        await LoadVideoAsync(file.FullPath);
+    }
+
+    private void RefreshDownloadedVideos(bool updateStatus = true)
+    {
+        var downloadDirectory = ResolveDownloadDirectory();
+        Directory.CreateDirectory(downloadDirectory);
+        DownloadDirectory = downloadDirectory;
+
+        DownloadedVideos.Clear();
+
+        var videoFiles = new DirectoryInfo(downloadDirectory)
+            .GetFiles()
+            .Where(file => SupportedVideoExtensions.Contains(file.Extension, StringComparer.OrdinalIgnoreCase))
+            .OrderByDescending(file => file.LastWriteTime)
+            .ToList();
+
+        foreach (var file in videoFiles)
+        {
+            DownloadedVideos.Add(new DownloadedVideoFile
+            {
+                Name = file.Name,
+                FileSize = FormatFileSize(file.Length),
+                ModifiedTime = file.LastWriteTime.ToString("yyyy-MM-dd HH:mm"),
+                FullPath = file.FullName
+            });
+        }
+
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasDownloadedVideos)));
+
+        if (!updateStatus)
+        {
+            return;
+        }
+
+        if (videoFiles.Count == 0)
+        {
+            SetDownloadStatus("download 目录中暂时还没有视频文件。");
+            return;
+        }
+
+        SetDownloadStatus($"已发现 {videoFiles.Count} 个本地视频文件。");
     }
 
     private void RevalidateSegments()
@@ -554,10 +896,51 @@ public class MainWindowViewModel : INotifyPropertyChanged
             .ToArray();
     }
 
+    private static string BuildProgressText(double percent, string speed, string eta)
+    {
+        var parts = new List<string> { $"{percent:0.0}%" };
+
+        if (!string.IsNullOrWhiteSpace(speed) && speed != "N/A")
+        {
+            parts.Add(speed);
+        }
+
+        if (!string.IsNullOrWhiteSpace(eta) && eta != "N/A")
+        {
+            parts.Add($"ETA {eta}");
+        }
+
+        return string.Join("  ", parts);
+    }
+
+    private static string ResolveDownloadDirectory()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (current is not null)
+        {
+            var csprojPath = Path.Combine(current.FullName, "videoCut.csproj");
+            if (File.Exists(csprojPath))
+            {
+                return Path.Combine(current.FullName, "download");
+            }
+
+            current = current.Parent;
+        }
+
+        return Path.Combine(AppContext.BaseDirectory, "download");
+    }
+
     private void SetExportStatus(string message, bool isError = false)
     {
         ExportStatus = message;
         IsExportStatusError = isError;
+    }
+
+    private void SetDownloadStatus(string message, bool isError = false)
+    {
+        DownloadStatus = message;
+        IsDownloadStatusError = isError;
     }
 
     private void UnsubscribeSegment(SegmentDraft segment)
