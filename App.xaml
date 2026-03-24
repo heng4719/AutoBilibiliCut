@@ -17,6 +17,7 @@
         <SolidColorBrush x:Key="BodyTextBrush" Color="#FF111827" />
         <SolidColorBrush x:Key="ErrorBrush" Color="#FFB91C1C" />
         <SolidColorBrush x:Key="HeaderBrush" Color="#FFF7F7F5" />
+        <SolidColorBrush x:Key="TitleBarSurfaceBrush" Color="#FFFCFCFA" />
         <SolidColorBrush x:Key="ScrollTrackBrush" Color="#FFF1F5F9" />
         <SolidColorBrush x:Key="ScrollThumbBrush" Color="#FFB8C5D1" />
         <SolidColorBrush x:Key="ScrollThumbHoverBrush" Color="#FF94AAB9" />
@@ -28,9 +29,14 @@
         </Style>
 
         <Style TargetType="TextBlock" x:Key="SectionTitleStyle">
-            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontSize" Value="15" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="PageTitleStyle">
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="Bold" />
         </Style>
 
         <Style TargetType="TextBlock" x:Key="LabelStyle">
@@ -219,6 +225,46 @@
                     <Setter Property="Background" Value="#FFF8DCDC" />
                     <Setter Property="Foreground" Value="{StaticResource ErrorBrush}" />
                     <Setter Property="BorderBrush" Value="#FFD98C86" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WindowActionButtonStyle" TargetType="Button" BasedOn="{StaticResource GhostButtonStyle}">
+            <Setter Property="Width" Value="44" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="MinWidth" Value="44" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="0,0,0,0" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource BodyTextBrush}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFF2F5F7" />
+                    <Setter Property="Foreground" Value="White" />
+                    <Setter Property="BorderBrush" Value="#FFE0E7EC" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FFE8EEF2" />
+                    <Setter Property="Foreground" Value="White" />
+                    <Setter Property="BorderBrush" Value="#FFD6DFE7" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WindowCloseButtonStyle" TargetType="Button" BasedOn="{StaticResource WindowActionButtonStyle}">
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#FFD44242" />
+                    <Setter Property="Foreground" Value="White" />
+                    <Setter Property="BorderBrush" Value="#FFD44242" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="#FFBC2F2F" />
+                    <Setter Property="Foreground" Value="White" />
+                    <Setter Property="BorderBrush" Value="#FFBC2F2F" />
                 </Trigger>
             </Style.Triggers>
         </Style>

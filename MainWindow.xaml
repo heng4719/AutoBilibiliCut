@@ -3,6 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:fa="http://schemas.fontawesome.io/icons/"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         xmlns:views="clr-namespace:videoCut.Views"
         mc:Ignorable="d"
         Title="视频下载与切片工具"
@@ -10,35 +12,63 @@
         Width="1120"
         Height="760"
         MinWidth="980"
-        MinHeight="760"
-        MaxHeight="760"
-        ResizeMode="CanMinimize"
+        MinHeight="700"
+        ResizeMode="CanResize"
+        WindowStyle="None"
+        Background="{StaticResource AppBackgroundBrush}"
+        StateChanged="Window_StateChanged"
         WindowStartupLocation="CenterScreen">
-    <Grid Background="{StaticResource AppBackgroundBrush}">
-        <Grid Margin="20">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0"
+                            CornerRadius="0"
+                            GlassFrameThickness="0"
+                            ResizeBorderThickness="6"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Border Background="{StaticResource AppBackgroundBrush}"
+            BorderBrush="{StaticResource LineBrush}"
+            BorderThickness="1"
+            CornerRadius="0">
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid Grid.Row="0"
+                  Background="{StaticResource TitleBarSurfaceBrush}"
+                  MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="视频下载与切片工具"
-                               FontSize="26"
-                               FontWeight="Bold" />
-                    <TextBlock Margin="0,6,0,0"
-                               Foreground="{StaticResource SecondaryTextBrush}"
-                               Text="先下载视频，再进入切片页面完成时间范围配置与导出。" />
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            Margin="18,14,16,14"
+                            VerticalAlignment="Center">
+                    <Image Width="20"
+                           Height="20"
+                           Margin="0,0,10,0"
+                           Source="/assets/icon/app.ico" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Text="视频下载与切片工具" />
+                        <TextBlock Margin="0,2,0,0"
+                                   FontSize="12"
+                                   Foreground="{StaticResource SecondaryTextBrush}"
+                                   Text="下载、选择与切片导出都在同一个窗口里完成" />
+                    </StackPanel>
                 </StackPanel>
 
-                <Border Grid.Column="1"
-                        VerticalAlignment="Bottom"
+                <Border Grid.Column="2"
+                        Margin="0,12,16,12"
+                        VerticalAlignment="Center"
                         Background="{StaticResource SurfaceBrush}"
                         BorderBrush="{StaticResource LineBrush}"
                         BorderThickness="1"
@@ -85,14 +115,41 @@
                         </Button>
                     </Grid>
                 </Border>
+
+                <StackPanel Grid.Column="3"
+                            Orientation="Horizontal"
+                            Margin="0,12,12,12"
+                            VerticalAlignment="Center">
+                    <Button Style="{StaticResource WindowActionButtonStyle}"
+                            ToolTip="最小化"
+                            Click="MinimizeButton_Click">
+                        <fa:ImageAwesome Icon="WindowMinimize"
+                                         Width="13"
+                                         Height="13"
+                                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                    </Button>
+                    <Button x:Name="ToggleWindowStateButton"
+                            Style="{StaticResource WindowActionButtonStyle}"
+                            ToolTip="最大化"
+                            Click="ToggleWindowStateButton_Click" />
+                    <Button Style="{StaticResource WindowCloseButtonStyle}"
+                            ToolTip="关闭"
+                            Click="CloseButton_Click">
+                        <fa:ImageAwesome Icon="Close"
+                                         Width="13"
+                                         Height="13"
+                                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                    </Button>
+                </StackPanel>
             </Grid>
 
             <Border Grid.Row="1"
                     BorderBrush="{StaticResource LineBrush}"
                     BorderThickness="0,1,0,0"
-                    Margin="0,0,0,16" />
+                    Margin="0,0,0,0" />
 
-            <Grid Grid.Row="2">
+            <Grid Grid.Row="2"
+                  Margin="20,16,20,20">
                 <views:DownloadPage>
                     <views:DownloadPage.Style>
                         <Style TargetType="views:DownloadPage">
@@ -120,5 +177,5 @@
                 </views:CutPage>
             </Grid>
         </Grid>
-    </Grid>
+    </Border>
 </Window>

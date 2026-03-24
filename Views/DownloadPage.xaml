@@ -41,10 +41,10 @@
                         </Grid>
                     </Viewbox>
                     <TextBlock Text="视频下载"
-                               FontSize="22"
-                               FontWeight="Bold" />
+                               Style="{StaticResource PageTitleStyle}" />
                 </StackPanel>
                 <TextBlock Margin="0,6,0,0"
+                           FontSize="12"
                            Foreground="{StaticResource SecondaryTextBrush}"
                            Text="输入视频地址后下载到项目内的 download 目录，下载完成后可以在列表中继续播放或进入切片流程。" />
             </StackPanel>
