@@ -9,7 +9,7 @@
         <Style x:Key="DownloadedVideoNameTextStyle"
                TargetType="TextBlock"
                BasedOn="{StaticResource DataGridDisplayTextStyle}">
-            <Setter Property="Padding" Value="8,0,0,0" />
+            <Setter Property="Margin" Value="8,0,0,0" />
         </Style>
     </UserControl.Resources>
     <Grid>
@@ -310,15 +310,15 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
-                                    <Button Content="播放"
-                                            Grid.Column="0"
+                                    <Button Grid.Column="0"
+                                            Content="播放"
                                             Width="52"
                                             Margin="0"
                                             Style="{StaticResource CompactGhostButtonStyle}"
                                             Command="{Binding DataContext.PlayDownloadedVideoCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                             CommandParameter="{Binding}" />
-                                    <Button Content="选择"
-                                            Grid.Column="2"
+                                    <Button Grid.Column="2"
+                                            Content="选择"
                                             Width="52"
                                             Margin="0"
                                             Style="{StaticResource CompactGhostButtonStyle}"

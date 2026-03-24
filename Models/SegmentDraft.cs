@@ -10,6 +10,7 @@ public class SegmentDraft : INotifyPropertyChanged
     private string _endTime = string.Empty;
     private string _duration = "--";
     private string _status = "待填写";
+    private string _exportedFilePath = string.Empty;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -41,6 +42,12 @@ public class SegmentDraft : INotifyPropertyChanged
     {
         get => _status;
         set => SetProperty(ref _status, value);
+    }
+
+    public string ExportedFilePath
+    {
+        get => _exportedFilePath;
+        set => SetProperty(ref _exportedFilePath, value);
     }
 
     private void SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)

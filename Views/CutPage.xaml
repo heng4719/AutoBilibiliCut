@@ -5,6 +5,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:models="clr-namespace:videoCut.Models"
              mc:Ignorable="d">
+    <UserControl.Resources>
+        <Style x:Key="SegmentNameTextStyle"
+               TargetType="TextBlock"
+               BasedOn="{StaticResource DataGridDisplayTextStyle}">
+            <Setter Property="Margin" Value="8,0,0,0" />
+        </Style>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -380,11 +387,17 @@
             <DataGrid Grid.Row="1"
                       Background="{StaticResource SurfaceBrush}"
                       ItemsSource="{Binding Segments}"
-                      IsReadOnly="False">
+                      IsReadOnly="False"
+                      RowHeight="38"
+                      ColumnHeaderHeight="38"
+                      HorizontalGridLinesBrush="#FFEFF2F5">
+                <DataGrid.Resources>
+                    <Style TargetType="ScrollBar" BasedOn="{StaticResource CompactScrollBarStyle}" />
+                </DataGrid.Resources>
                 <DataGrid.Columns>
                     <DataGridTextColumn Width="2*"
                                         Header="切片名称"
-                                        ElementStyle="{StaticResource DataGridDisplayTextStyle}"
+                                        ElementStyle="{StaticResource SegmentNameTextStyle}"
                                         EditingElementStyle="{StaticResource DataGridEditingTextStyle}"
                                         Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" />
                     <DataGridTextColumn Width="*"
@@ -407,16 +420,44 @@
                                         IsReadOnly="True"
                                         ElementStyle="{StaticResource DataGridDisplayTextStyle}"
                                         Binding="{Binding Status}" />
-                    <DataGridTemplateColumn Width="88" Header="操作">
+                    <DataGridTemplateColumn Width="64" Header="操作">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate DataType="{x:Type models:SegmentDraft}">
-                                <Button Content="删除"
-                                        Width="60"
-                                        Padding="10,6"
-                                        Margin="0"
-                                        Style="{StaticResource GhostButtonStyle}"
-                                        Command="{Binding DataContext.RemoveSegmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}" />
+                                <Grid Width="32" HorizontalAlignment="Center">
+                                    <Button Margin="0"
+                                            Content="删除"
+                                            Width="52"
+                                            Command="{Binding DataContext.RemoveSegmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource DangerGhostButtonStyle}">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Status}" Value="导出成功">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+
+                                    <Button Margin="0"
+                                            Content="播放"
+                                            Width="52"
+                                            Command="{Binding DataContext.PlaySegmentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource CompactGhostButtonStyle}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Status}" Value="导出成功">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </Grid>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

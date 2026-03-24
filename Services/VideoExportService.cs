@@ -16,6 +16,11 @@ public class VideoExportService
 
         Directory.CreateDirectory(outputDirectory);
         var outputPath = BuildOutputPath(outputDirectory, segment.Name);
+        return await ExportInternalAsync(ffmpegPath, inputPath, outputPath, segment);
+    }
+
+    private static async Task<VideoExportResult> ExportInternalAsync(string ffmpegPath, string inputPath, string outputPath, SegmentDraft segment)
+    {
         var arguments =
             $"-y -ss {segment.StartTime} -to {segment.EndTime} -i \"{inputPath}\" -c copy \"{outputPath}\"";
 
@@ -51,11 +56,7 @@ public class VideoExportService
 
     private static string BuildOutputPath(string outputDirectory, string segmentName)
     {
-        var safeFileName = string.Join("_", segmentName.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries)).Trim();
-        if (string.IsNullOrWhiteSpace(safeFileName))
-        {
-            safeFileName = "切片";
-        }
+        var safeFileName = SanitizeFileName(segmentName);
 
         var fileName = $"{safeFileName}.mp4";
         var fullPath = Path.Combine(outputDirectory, fileName);
@@ -68,5 +69,11 @@ public class VideoExportService
         }
 
         return fullPath;
+    }
+
+    private static string SanitizeFileName(string segmentName)
+    {
+        var safeFileName = string.Join("_", segmentName.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries)).Trim();
+        return string.IsNullOrWhiteSpace(safeFileName) ? "切片" : safeFileName;
     }
 }

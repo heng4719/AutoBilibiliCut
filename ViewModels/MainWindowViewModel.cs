@@ -65,6 +65,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         RemoveSegmentCommand = new RelayCommand(segment => RemoveSegment(segment as SegmentDraft));
         SelectOutputDirectoryCommand = new RelayCommand(_ => SelectOutputDirectory());
         ExportSegmentsCommand = new RelayCommand(async _ => await ExportSegmentsAsync());
+        PlaySegmentCommand = new RelayCommand(segment => PlaySegment(segment as SegmentDraft));
         TestDownloadCommand = new RelayCommand(async _ => await TestDownloadAsync());
         ShowDownloadPageCommand = new RelayCommand(_ => ShowDownloadPage());
         ShowCutPageCommand = new RelayCommand(_ => ShowCutPage());
@@ -92,6 +93,8 @@ public class MainWindowViewModel : INotifyPropertyChanged
     public ICommand SelectOutputDirectoryCommand { get; }
 
     public ICommand ExportSegmentsCommand { get; }
+
+    public ICommand PlaySegmentCommand { get; }
 
     public ICommand TestDownloadCommand { get; }
 
@@ -458,6 +461,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         if (e.PropertyName is nameof(SegmentDraft.Name) or nameof(SegmentDraft.StartTime) or nameof(SegmentDraft.EndTime))
         {
+            segment.ExportedFilePath = string.Empty;
             ValidateSegment(segment);
             UpdateSegmentSummary();
         }
@@ -469,6 +473,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             segment.Duration = "--";
             segment.Status = "名称不能为空";
+            segment.ExportedFilePath = string.Empty;
             return;
         }
 
@@ -476,6 +481,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             segment.Duration = "--";
             segment.Status = "开始时间格式错误";
+            segment.ExportedFilePath = string.Empty;
             return;
         }
 
@@ -483,6 +489,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             segment.Duration = "--";
             segment.Status = "结束时间格式错误";
+            segment.ExportedFilePath = string.Empty;
             return;
         }
 
@@ -490,6 +497,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             segment.Duration = "--";
             segment.Status = "结束时间必须大于开始时间";
+            segment.ExportedFilePath = string.Empty;
             return;
         }
 
@@ -497,11 +505,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
         {
             segment.Duration = "--";
             segment.Status = "结束时间超过视频总时长";
+            segment.ExportedFilePath = string.Empty;
             return;
         }
 
         segment.Duration = (end - start).ToString(@"hh\:mm\:ss");
         segment.Status = "可导出";
+        segment.ExportedFilePath = string.Empty;
     }
 
     private void SelectOutputDirectory()
@@ -554,14 +564,19 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         RevalidateSegments();
 
-        var invalidSegments = Segments.Where(x => x.Status != "可导出").ToList();
+        var invalidSegments = Segments.Where(x => x.Status is not ("可导出" or "导出成功")).ToList();
         if (invalidSegments.Count > 0)
         {
             SetExportStatus("存在异常状态的切片，请先修正后再导出", true);
             return;
         }
 
-        var exportableSegments = Segments.ToList();
+        var exportableSegments = Segments.Where(x => x.Status == "可导出").ToList();
+        if (exportableSegments.Count == 0)
+        {
+            SetExportStatus("当前切片都已导出完成。");
+            return;
+        }
 
         _isExporting = true;
         var successCount = 0;
@@ -576,11 +591,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
             if (result.IsSuccess)
             {
                 segment.Status = "导出成功";
+                segment.ExportedFilePath = result.OutputPath;
                 successCount++;
             }
             else
             {
                 segment.Status = $"导出失败";
+                segment.ExportedFilePath = string.Empty;
                 failureCount++;
                 VideoStatus = result.ErrorMessage;
                 SetExportStatus($"导出失败：{segment.Name}", true);
@@ -589,6 +606,47 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
         _isExporting = false;
         SetExportStatus($"导出完成，成功 {successCount} 个，失败 {failureCount} 个", failureCount > 0);
+    }
+
+    private void PlaySegment(SegmentDraft? segment)
+    {
+        if (_isExporting || _isTestingDownload || _isDownloadingVideo)
+        {
+            return;
+        }
+
+        if (segment is null)
+        {
+            SetExportStatus("未找到要播放的切片。", true);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(segment.ExportedFilePath))
+        {
+            SetExportStatus("请先执行切片导出，再播放该切片。", true);
+            return;
+        }
+
+        if (!File.Exists(segment.ExportedFilePath))
+        {
+            SetExportStatus("切片文件不存在，请重新导出后再播放。", true);
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = segment.ExportedFilePath,
+                UseShellExecute = true
+            });
+
+            SetExportStatus($"已打开切片：{segment.Name}");
+        }
+        catch (Exception ex)
+        {
+            SetExportStatus($"播放切片失败：{ex.Message}", true);
+        }
     }
 
     private async Task TestDownloadAsync()
@@ -836,7 +894,7 @@ public class MainWindowViewModel : INotifyPropertyChanged
             return;
         }
 
-        var readyCount = Segments.Count(x => x.Status == "可导出");
+        var readyCount = Segments.Count(x => x.Status is "可导出" or "导出成功");
         var invalidCount = Segments.Count - readyCount;
         SetExportStatus($"当前共 {Segments.Count} 个切片，其中 {readyCount} 个可导出，{invalidCount} 个待修正", invalidCount > 0);
     }
@@ -915,6 +973,11 @@ public class MainWindowViewModel : INotifyPropertyChanged
 
     private static string ResolveDownloadDirectory()
     {
+        return Path.Combine(ResolveProjectRootDirectory(), "download");
+    }
+
+    private static string ResolveProjectRootDirectory()
+    {
         var current = new DirectoryInfo(AppContext.BaseDirectory);
 
         while (current is not null)
@@ -922,13 +985,13 @@ public class MainWindowViewModel : INotifyPropertyChanged
             var csprojPath = Path.Combine(current.FullName, "videoCut.csproj");
             if (File.Exists(csprojPath))
             {
-                return Path.Combine(current.FullName, "download");
+                return current.FullName;
             }
 
             current = current.Parent;
         }
 
-        return Path.Combine(AppContext.BaseDirectory, "download");
+        return AppContext.BaseDirectory;
     }
 
     private void SetExportStatus(string message, bool isError = false)
